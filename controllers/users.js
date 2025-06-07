@@ -238,12 +238,17 @@ const setBanner = async (req, res) => {
 
 const getAll = async (req, res) => {
   try {
+    const { limit } = req.query;
+
+    console.log(limit);
+
     const users = await prisma.user.findMany({
       orderBy: {
         subscribedTo: {
           _count: "desc",
         },
       },
+      take: +limit || undefined,
       include: {
         subscribedTo: true,
         posts: true,

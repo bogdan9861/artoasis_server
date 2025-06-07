@@ -16,7 +16,7 @@ const { like, unlike, isLiked } = require("../controllers/likes");
 
 router.post("/", auth, fileMiddleware.single("file"), create);
 router.get("/", getAllPosts);
-router.put("/", auth, edit);
+router.put("/:id", fileMiddleware.single("file"), auth, edit);
 router.get("/:id", getById);
 router.delete("/:id", auth, remove);
 

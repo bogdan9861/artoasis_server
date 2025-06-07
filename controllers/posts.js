@@ -155,7 +155,8 @@ const remove = async (req, res) => {
 
 const edit = async (req, res) => {
   try {
-    const { id, title, text } = req.body;
+    const { id } = req.params;
+    const body = req.body;
     const file = req.file;
 
     if (!id) {
@@ -172,23 +173,21 @@ const edit = async (req, res) => {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    if (post.userId !== req.user.id) {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
     const updatedPost = await prisma.post.update({
       where: {
         id,
       },
       data: {
-        title: title || post.title,
-        text: text || post.text,
+        title: body?.title || post.title,
+        text: body?.text || post.text,
         media: file?.path || post.media,
       },
     });
 
     res.status(201).json(updatedPost);
   } catch (error) {
+    console.log(error);
+
     res.status(500).json({ message: "Unknown server error" });
   }
 };

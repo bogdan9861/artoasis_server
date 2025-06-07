@@ -236,6 +236,26 @@ const setBanner = async (req, res) => {
   }
 };
 
+const getAll = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: {
+        subscribedTo: {
+          _count: "desc",
+        },
+      },
+      include: {
+        subscribedTo: true,
+        posts: true,
+      },
+    });
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -243,4 +263,5 @@ module.exports = {
   edit,
   getById,
   setBanner,
+  getAll,
 };

@@ -11,6 +11,7 @@ const {
   getById,
   setBanner,
   getAll,
+  sendPassword,
 } = require("../controllers/users");
 
 router.post("/register", fileMiddleware.single("image"), register);
@@ -20,5 +21,6 @@ router.get("/all", getAll);
 router.get("/:id", auth, getById);
 router.put("/", auth, fileMiddleware.single("image"), edit);
 router.put("/set-banner", auth, fileMiddleware.single("banner"), setBanner);
+router.post("/send-password", sendPassword);
 
 module.exports = router;

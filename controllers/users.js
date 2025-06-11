@@ -1,4 +1,5 @@
 const { prisma } = require("../prisma/prisma.client");
+const { sendEmail } = require("../utils/sendEmail");
 
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -33,8 +34,11 @@ const register = async (req, res) => {
         login,
         description: description || "",
         avatar: file?.path || "public/no-photo.png",
-        password: hashedPassword,
+        password,
         role: "USER",
+      },
+      omit: {
+        password,
       },
     });
 
@@ -77,7 +81,7 @@ const login = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    const isPasswordCorrect = password === user.password;
 
     const token = jwt.sign({ id: user.id }, process.env.SECRET, {
       expiresIn: "30d",
@@ -99,6 +103,8 @@ const current = async (req, res) => {
   try {
     res.status(200).json({ data: req.user });
   } catch (error) {
+    console.log(error);
+
     res.status(500).json({ message: "Unknown server error" });
   }
 };
@@ -257,7 +263,31 @@ const getAll = async (req, res) => {
 
     res.status(200).json(users);
   } catch (error) {
+    res.status(500).json({ message: "Unknown server error" });
+  }
+};
+
+const sendPassword = async (req, res) => {
+  try {
+    const { login } = req.body;
+
+    const user = await prisma.user.findFirst({
+      where: {
+        login,
+      },
+    });
+
+    sendEmail(
+      user?.login,
+      `${user.name}, для вашего аккаунта был запрошен пароль. Если это были не вы, игнорируйте это письмо и никому не сообщайте этот пароль:`,
+      `Ваш пороль: ${user.password}`
+    );
+
+    res.status(200).json({ status: "success" });
+  } catch (error) {
     console.log(error);
+
+    res.status(500).json({ message: "Unknown server error" });
   }
 };
 
@@ -269,4 +299,5 @@ module.exports = {
   getById,
   setBanner,
   getAll,
+  sendPassword,
 };

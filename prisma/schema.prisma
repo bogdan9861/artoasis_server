@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int     @id @default(autoincrement())
+  name        String
+  login       String  @unique
+  password    String
+  role        Role
+  avatar      String?
+  description String?
+  banner      String?
+  bio         String?
+  Exhibitions String?
+  Education   String?
+
+  comments Comment[]
+  posts    Post[]
+  likes    Like[]
+
+  subscriptions Subscription[] @relation("userSubscriptions")
+  subscribedTo  Subscription[] @relation("subscribedToUsers")
+
+  Favorite Favorite[]
+
+  @@map("users")
+}
+
+model Post {
+  id     String @id @default(uuid())
+  User   User?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int?
+
+  title     String
+  text      String
+  date      DateTime @default(now())
+  media     String?
+  mediaType String?
+  rating    Int      @default(0)
+
+  likes    Like[]
+  comments Comment[]
+  tags     PostTag[]
+
+  favorites Favorite[]
+}
+
+model Like {
+  Post   Post?  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+
+  User   User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  @@id([userId, postId])
+}
+
+model Tag {
+  id      Int       @id @default(autoincrement())
+  name    String
+  PostTag PostTag[]
+}
+
+model PostTag {
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tagId  Int
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model Comment {
+  id String @id @default(uuid())
+
+  Post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String?
+
+  User   User? @relation(fields: [userId], references: [id])
+  userId Int?
+
+  date DateTime @default(now())
+
+  text String
+}
+
+enum Role {
+  USER
+  MODERATOR
+}
+
+model Subscription {
+  id             Int      @id @default(autoincrement())
+  subscriberId   Int // ID пользователя, который подписался
+  subscribedToId Int // ID пользователя, на которого подписались
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  subscriber     User     @relation("userSubscriptions", fields: [subscriberId], references: [id])
+  subscribedTo   User     @relation("subscribedToUsers", fields: [subscribedToId], references: [id])
+
+  @@unique([subscriberId, subscribedToId]) // Чтобы не было дубликатов подписок
+}
+
+model Favorite {
+  userId Int
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId]) // Составной первичный ключ (userId + postId)
+}
